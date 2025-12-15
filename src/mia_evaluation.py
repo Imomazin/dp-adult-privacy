@@ -198,6 +198,7 @@ def load_model(checkpoint_path: str, device: torch.device) -> nn.Module:
 
 
 def run_mia_evaluation(
+    dataset: str = "adult",
     baseline_path: str = None,
     dp_path: str = None,
     batch_size: int = 256,
@@ -207,6 +208,7 @@ def run_mia_evaluation(
     Run membership inference attack evaluation on trained models.
 
     Args:
+        dataset: Dataset name ('adult' or 'bank')
         baseline_path: Path to baseline model checkpoint
         dp_path: Path to DP model checkpoint
         batch_size: Batch size for evaluation
@@ -220,9 +222,9 @@ def run_mia_evaluation(
     print(f"Using device: {device}")
 
     # Load data
-    print("\n--- Loading Data ---")
+    print(f"\n--- Loading Data ({dataset}) ---")
     train_loader, val_loader, test_loader, input_dim = get_data_loaders(
-        batch_size=batch_size, seed=seed
+        dataset=dataset, batch_size=batch_size, seed=seed
     )
 
     results = {}
@@ -299,6 +301,8 @@ def run_mia_evaluation(
 
 def main():
     parser = argparse.ArgumentParser(description="Membership Inference Attack Evaluation")
+    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank"],
+                        help="Dataset to use (default: adult)")
     parser.add_argument("--baseline", type=str, default="checkpoints/baseline_final.pt",
                         help="Path to baseline model checkpoint")
     parser.add_argument("--dp", type=str, default="checkpoints/dp_final.pt",
@@ -309,6 +313,7 @@ def main():
     args = parser.parse_args()
 
     results = run_mia_evaluation(
+        dataset=args.dataset,
         baseline_path=args.baseline,
         dp_path=args.dp,
         batch_size=args.batch_size,

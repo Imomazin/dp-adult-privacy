@@ -1,5 +1,5 @@
 """
-Differentially Private (DP-SGD) training script for the Adult dataset.
+Differentially Private (DP-SGD) training script.
 
 This script trains a neural network with differential privacy guarantees
 using Opacus, implementing the DP-SGD algorithm.
@@ -111,6 +111,7 @@ def evaluate(
 
 
 def train_dp(
+    dataset: str = "adult",
     epochs: int = 20,
     batch_size: int = 256,
     learning_rate: float = 0.001,
@@ -125,6 +126,7 @@ def train_dp(
     Train a differentially private model using DP-SGD.
 
     Args:
+        dataset: Dataset name ('adult' or 'bank')
         epochs: Number of training epochs
         batch_size: Batch size (logical batch size for DP)
         learning_rate: Learning rate for optimizer
@@ -146,9 +148,9 @@ def train_dp(
     print(f"Using device: {device}")
 
     # Load data
-    print("\n--- Loading Data ---")
+    print(f"\n--- Loading Data ({dataset}) ---")
     train_loader, val_loader, test_loader, input_dim = get_data_loaders(
-        batch_size=batch_size, seed=seed
+        dataset=dataset, batch_size=batch_size, seed=seed
     )
 
     # Create model
@@ -266,6 +268,8 @@ def train_dp(
 
 def main():
     parser = argparse.ArgumentParser(description="Train DP model with DP-SGD")
+    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank"],
+                        help="Dataset to use (default: adult)")
     parser.add_argument("--epochs", type=int, default=20, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=256, help="Batch size")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
@@ -279,6 +283,7 @@ def main():
     args = parser.parse_args()
 
     results = train_dp(
+        dataset=args.dataset,
         epochs=args.epochs,
         batch_size=args.batch_size,
         learning_rate=args.lr,

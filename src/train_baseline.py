@@ -1,5 +1,5 @@
 """
-Baseline (non-private) training script for the Adult dataset.
+Baseline (non-private) training script.
 
 This script trains a standard neural network without differential privacy
 to establish a baseline for comparison with DP-SGD training.
@@ -96,6 +96,7 @@ def evaluate(
 
 
 def train_baseline(
+    dataset: str = "adult",
     epochs: int = 20,
     batch_size: int = 256,
     learning_rate: float = 0.001,
@@ -107,6 +108,7 @@ def train_baseline(
     Train a baseline (non-private) model.
 
     Args:
+        dataset: Dataset name ('adult' or 'bank')
         epochs: Number of training epochs
         batch_size: Batch size
         learning_rate: Learning rate for optimizer
@@ -125,9 +127,9 @@ def train_baseline(
     print(f"Using device: {device}")
 
     # Load data
-    print("\n--- Loading Data ---")
+    print(f"\n--- Loading Data ({dataset}) ---")
     train_loader, val_loader, test_loader, input_dim = get_data_loaders(
-        batch_size=batch_size, seed=seed
+        dataset=dataset, batch_size=batch_size, seed=seed
     )
 
     # Create model
@@ -206,6 +208,8 @@ def train_baseline(
 
 def main():
     parser = argparse.ArgumentParser(description="Train baseline (non-private) model")
+    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank"],
+                        help="Dataset to use (default: adult)")
     parser.add_argument("--epochs", type=int, default=20, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=256, help="Batch size")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
@@ -216,6 +220,7 @@ def main():
     args = parser.parse_args()
 
     results = train_baseline(
+        dataset=args.dataset,
         epochs=args.epochs,
         batch_size=args.batch_size,
         learning_rate=args.lr,
