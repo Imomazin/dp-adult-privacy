@@ -188,7 +188,7 @@ def load_model(checkpoint_path: str, device: torch.device) -> nn.Module:
     Returns:
         Loaded model
     """
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model = create_model(
         input_dim=checkpoint["input_dim"],
         hidden_dim=checkpoint["hidden_dim"]
