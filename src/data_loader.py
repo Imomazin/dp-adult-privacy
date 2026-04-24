@@ -4,6 +4,7 @@ Data loading and preprocessing for privacy-preserving ML experiments.
 Supported datasets:
 - Adult Census Income (default)
 - UCI Bank Marketing
+- UCI Credit Default
 """
 
 import os
@@ -56,6 +57,20 @@ BANK_CATEGORICAL_COLS = [
 
 BANK_NUMERICAL_COLS = [
     "age", "balance", "day", "duration", "campaign", "pdays", "previous"
+]
+
+# =============================================================================
+# Credit Default Dataset Configuration
+# =============================================================================
+CREDIT_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00350/default%20of%20credit%20card%20clients.xls"
+
+CREDIT_CATEGORICAL_COLS = ["SEX", "EDUCATION", "MARRIAGE"]
+
+CREDIT_NUMERICAL_COLS = [
+    "LIMIT_BAL", "AGE",
+    "PAY_0", "PAY_2", "PAY_3", "PAY_4", "PAY_5", "PAY_6",
+    "BILL_AMT1", "BILL_AMT2", "BILL_AMT3", "BILL_AMT4", "BILL_AMT5", "BILL_AMT6",
+    "PAY_AMT1", "PAY_AMT2", "PAY_AMT3", "PAY_AMT4", "PAY_AMT5", "PAY_AMT6"
 ]
 
 
@@ -196,6 +211,67 @@ def load_bank_data(data_dir: str = "data", test_size: float = 0.2, seed: int = 4
     return X_train, X_test, y_train, y_test
 
 
+# =============================================================================
+# Credit Default Dataset Functions
+# =============================================================================
+
+def download_credit_data(data_dir: str = "data") -> str:
+    """Download the Credit Default dataset if not already present."""
+    os.makedirs(data_dir, exist_ok=True)
+
+    xls_path = os.path.join(data_dir, "credit_default.xls")
+
+    if not os.path.exists(xls_path):
+        print("Downloading Credit Default data...")
+        urllib.request.urlretrieve(CREDIT_URL, xls_path)
+
+    return xls_path
+
+
+def load_credit_data(data_dir: str = "data", test_size: float = 0.2, seed: int = 42) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Load and preprocess the Credit Default dataset with class imbalance handling."""
+    xls_path = download_credit_data(data_dir)
+
+    # Load data (skip header row, use second row as column names)
+    df = pd.read_excel(xls_path, header=1)
+
+    # Rename target column
+    df = df.rename(columns={"default payment next month": "default"})
+
+    print(f"Credit Default dataset - Total samples: {len(df)}")
+
+    # Check class imbalance
+    pos_rate = df["default"].mean()
+    print(f"Class imbalance - Default rate: {pos_rate:.3f}")
+
+    # Extract target
+    y = df["default"].values
+
+    # Remove ID and target columns
+    df = df.drop(["ID", "default"], axis=1)
+
+    # One-hot encode categorical columns
+    df_encoded = pd.get_dummies(df, columns=CREDIT_CATEGORICAL_COLS)
+
+    # Scale numerical features
+    scaler = StandardScaler()
+    df_encoded[CREDIT_NUMERICAL_COLS] = scaler.fit_transform(df_encoded[CREDIT_NUMERICAL_COLS])
+
+    X = df_encoded.values.astype(np.float32)
+    y = y.astype(np.float32)
+
+    # Stratified split to preserve class imbalance in both sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=seed, stratify=y
+    )
+
+    print(f"Credit Default dataset - Train: {len(X_train)}, Test: {len(X_test)}")
+    print(f"Feature dimension: {X_train.shape[1]}")
+    print(f"Train default rate: {y_train.mean():.3f}, Test default rate: {y_test.mean():.3f}")
+
+    return X_train, X_test, y_train, y_test
+
+
 def create_data_loaders(
     X_train: np.ndarray,
     X_test: np.ndarray,
@@ -260,7 +336,7 @@ def get_data_loaders(
     Main function to download, preprocess, and create DataLoaders.
 
     Args:
-        dataset: Dataset name ('adult' or 'bank')
+        dataset: Dataset name ('adult', 'bank', or 'credit_default')
         data_dir: Directory for data storage
         batch_size: Batch size for DataLoaders
         val_split: Fraction for validation split
@@ -274,8 +350,10 @@ def get_data_loaders(
         X_train, X_test, y_train, y_test = load_adult_data(data_dir)
     elif dataset == "bank":
         X_train, X_test, y_train, y_test = load_bank_data(data_dir, seed=seed)
+    elif dataset == "credit_default":
+        X_train, X_test, y_train, y_test = load_credit_data(data_dir, seed=seed)
     else:
-        raise ValueError(f"Unknown dataset: {dataset}. Choose 'adult' or 'bank'.")
+        raise ValueError(f"Unknown dataset: {dataset}. Choose 'adult', 'bank', or 'credit_default'.")
 
     # Create DataLoaders
     train_loader, val_loader, test_loader = create_data_loaders(
@@ -291,7 +369,8 @@ def get_data_loaders(
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Test data loading")
-    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank"])
+    parser.add_argument("--dataset", type=str, default="adult",
+                        choices=["adult", "bank", "credit_default"])
     args = parser.parse_args()
 
     print(f"Testing {args.dataset} dataset loading...")

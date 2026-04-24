@@ -21,7 +21,7 @@ from mia_evaluation import run_mia_evaluation
 
 # Default sweep parameters
 DEFAULT_EPSILONS = [2, 4, 8, 16]
-DEFAULT_DATASETS = ["adult", "bank"]
+DEFAULT_DATASETS = ["adult", "bank", "credit_default"]
 DEFAULT_SEED = 42
 
 
@@ -207,7 +207,7 @@ def print_summary(results: list[dict]) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Run DP training sweep")
     parser.add_argument("--datasets", type=str, nargs="+", default=DEFAULT_DATASETS,
-                        choices=["adult", "bank"], help="Datasets to sweep")
+                        choices=["adult", "bank", "credit_default"], help="Datasets to sweep")
     parser.add_argument("--epsilons", type=float, nargs="+", default=DEFAULT_EPSILONS,
                         help="Epsilon values to sweep (default: 2 4 8 16)")
     parser.add_argument("--epochs", type=int, default=20, help="Training epochs")

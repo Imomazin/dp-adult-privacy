@@ -208,7 +208,7 @@ def train_baseline(
 
 def main():
     parser = argparse.ArgumentParser(description="Train baseline (non-private) model")
-    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank"],
+    parser.add_argument("--dataset", type=str, default="adult", choices=["adult", "bank", "credit_default"],
                         help="Dataset to use (default: adult)")
     parser.add_argument("--epochs", type=int, default=20, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=256, help="Batch size")
